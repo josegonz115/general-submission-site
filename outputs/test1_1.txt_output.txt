@@ -1,0 +1,7 @@
+Checksum on checksum.c:
+10474
+md5sum on input file:
+Edges:
+       3 /Users/jj/projects/uci/research/hayes/general-submission-site/uploads/test1_1.txt
+Nodes:
+      15

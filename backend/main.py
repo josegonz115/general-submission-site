@@ -5,18 +5,23 @@ from starlette.templating import Jinja2Templates
 from starlette.requests import Request
 import subprocess
 import os
+from config import ROOT_DIR
 import logging
 from datetime import datetime
 import mimetypes
 from fastapi.middleware.cors import CORSMiddleware
 
 # run the server with: uvicorn main:app --reload
+# deployment: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
 
 app = FastAPI()
 
-app.mount("/assets", StaticFiles(directory="../frontend/dist/assets"), name="assets")
+assets_directory = os.path.join(ROOT_DIR, "frontend/dist/assets")
+public_directory = os.path.join(ROOT_DIR, "frontend/public")
+app.mount("/assets", StaticFiles(directory=assets_directory), name="assets")
+app.mount("/public", StaticFiles(directory=public_directory), name="public")
 
-templates = Jinja2Templates(directory="../frontend/dist")
+templates = Jinja2Templates(directory=os.path.join(ROOT_DIR, "frontend/dist"))
 
 if os.getenv("NODE_ENV") == "development":
     # for DEVELOPMENT ONLY
@@ -33,8 +38,11 @@ if os.getenv("NODE_ENV") == "development":
     # END DEVELOPMENT
 
 
-UPLOAD_DIR = "uploads"
-OUTPUT_DIR = "outputs"
+import os
+
+UPLOAD_DIR = os.path.join(ROOT_DIR, "uploads")
+OUTPUT_DIR = os.path.join(ROOT_DIR, "outputs")
+
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -65,10 +73,11 @@ async def upload_file(file: UploadFile = File(...)):
     # Run backend script
     try:
         result = subprocess.run(
-            ["bash", "backend.sh", file_path],
+            ['bash', 'backend.sh', file_path],
             capture_output=True,
             text=True,
-            check=True
+            check=True,
+            cwd=os.path.join(ROOT_DIR, "backend")
         )
         output = result.stdout
         logger.info(f"Script output: {output}")
@@ -123,8 +132,6 @@ def get_uploads():
             })
     return {"uploads": uploads}
 
-
-
 @app.delete("/api/{dir_type}/{filename}", response_class=JSONResponse)
 def delete_file(dir_type: str = Path(..., pattern="^(outputs|uploads)$"), filename: str = Path(...)):
     if dir_type == "outputs":
@@ -139,15 +146,6 @@ def delete_file(dir_type: str = Path(..., pattern="^(outputs|uploads)$"), filena
         return JSONResponse(content={"error": "File not found"}, status_code=404)
     os.remove(file_path)
     return JSONResponse(content={"message": "File deleted"}, status_code=200)
-
-    # if os.path.exists(file_path):
-    #     os.remove(file_path)
-    #     file_deleted = True
-    # if file_deleted:
-    #     return JSONResponse(content={"message": "File deleted"}, status_code=200)
-    # else:
-    #     return JSONResponse(content={"error": "File not found"}, status_code=404)
-
 
 @app.get("/api/{dir_type}/{filename}", response_class=FileResponse)
 def download_file(dir_type: str = Path(..., pattern="^(outputs|uploads)$"), filename: str = Path(...)):
