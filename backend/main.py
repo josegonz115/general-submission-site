@@ -12,7 +12,7 @@ import mimetypes
 from fastapi.middleware.cors import CORSMiddleware
 
 # run the server with: uvicorn main:app --reload
-# deployment: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+# proeductiion: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
 
 app = FastAPI()
 
