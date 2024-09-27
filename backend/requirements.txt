@@ -1,0 +1,5 @@
+fastapi
+fastapi-cli
+jinja2
+python-multipart
+uvicorn[standard]
