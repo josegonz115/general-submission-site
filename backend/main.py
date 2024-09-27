@@ -40,8 +40,8 @@ if os.getenv("NODE_ENV") == "development":
 
 import os
 
-UPLOAD_DIR = os.path.join(ROOT_DIR, "uploads")
-OUTPUT_DIR = os.path.join(ROOT_DIR, "outputs")
+UPLOAD_DIR = os.path.join(ROOT_DIR, "backend/uploads")
+OUTPUT_DIR = os.path.join(ROOT_DIR, "backend/outputs")
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
