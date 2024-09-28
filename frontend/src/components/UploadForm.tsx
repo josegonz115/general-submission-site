@@ -10,10 +10,14 @@ import { fileSchema } from "@/schema/schema";
 import { useState } from "react";
 import { Button } from "./ui/button";
 import FileUpload from "./FileUpload";
+import { Link } from "@tanstack/react-router";
+import Toast from "./Toast";
 
 const UploadForm = () => {
     const form = useForm();
     const [file] = useState<File | null>(null);
+    // const [fileUploaded, setFileUploaded] = useState(false);
+    const [uploadMessage, setUploadMessage] = useState<string | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault(); 
@@ -41,6 +45,15 @@ const UploadForm = () => {
         }
     };
 
+    const handleClosePreview = () => {
+        setUploadMessage(null);
+    };
+
+    const handleUploadMessage = (message: string | null) => {
+        setUploadMessage(message);
+        // toast.success(message);
+    };
+
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(() => handleSubmit)} className="space-y-8 w-1/2 mx-auto">
@@ -50,13 +63,16 @@ const UploadForm = () => {
                     render={ () => (
                         <FormItem>
                             <FormControl>
-                                <FileUpload />
+                                <FileUpload onUploadMessage={handleUploadMessage}/>
                             </FormControl>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
-                <Button type="submit">Submit</Button>
+                <Link to='/uploaded' className="mt-5"><Button type="submit" className="mt-5">Uploaded Page</Button></Link>
+                {uploadMessage && (
+                    <Toast message={uploadMessage} onClose={handleClosePreview} />
+                )}
             </form>
         </Form>
     );

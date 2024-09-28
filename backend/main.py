@@ -65,12 +65,12 @@ async def upload_file(file: UploadFile = File(...)):
     counter = 1
     base_filename, file_extension = os.path.splitext(filename)
     while os.path.exists(file_path):
-        filename = f"{base_filename}_{counter}{file_extension}"
+        # filename = f"{base_filename}_{counter}{file_extension}"
+        filename = f"{base_filename} ({counter}){file_extension}"
         file_path = os.path.join(UPLOAD_DIR, filename)
         counter += 1
     with open(file_path, "wb") as f:
         f.write(content)
-    # Run backend script
     try:
         result = subprocess.run(
             ['bash', 'backend.sh', file_path],
@@ -84,13 +84,17 @@ async def upload_file(file: UploadFile = File(...)):
     except subprocess.CalledProcessError as e:
         output = e.stderr
         logger.error(f"Script error: {output}")
-        return JSONResponse(content={"error": output}, status_code=500)
-    # Save output (optional)
-    output_file = os.path.join(OUTPUT_DIR, f"{filename}_output.txt")
+        raise HTTPException(status_code=500, detail=output)
+    # output_file = os.path.join(OUTPUT_DIR, f"{filename}_output.txt")
+    base_filename, file_extension = os.path.splitext(filename)
+    output_filename = f"{base_filename}_output{file_extension}"
+    output_file = os.path.join(OUTPUT_DIR, output_filename)
+
+    output_file_basename = os.path.basename(output_file)
     with open(output_file, "w") as f:
         f.write(output)
     # return output
-    return JSONResponse(content={"output": output})
+    return JSONResponse(content={"output": output, "output_file": output_file_basename})
 
 @app.get("/api/outputs", response_class=JSONResponse)
 def get_outputs():
@@ -189,3 +193,9 @@ def get_file_content(dir_type: str = Path(..., pattern="^(outputs|uploads)$"), f
         content = file.read()
     # return content
     return JSONResponse(content={"content": content})
+
+
+
+@app.get("/{full_path:path}", response_class=HTMLResponse)
+async def catch_all(request: Request, full_path: str):
+    return templates.TemplateResponse("index.html", {"request": request})

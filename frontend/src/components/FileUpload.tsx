@@ -9,7 +9,10 @@ import { useState } from "react";
 import { BASE_URL, MAX_FILE_SIZE } from "@/api/api";
 import { Button } from "./ui/button";
 
-export default function FileUpload() {
+type FileUploadProps = {
+    onUploadMessage: (message: string | null) => void;
+};
+export default function FileUpload({ onUploadMessage }: FileUploadProps) {
     const [extFiles, setExtFiles] = useState<ExtFile[]>([]);
     const [jobFinished, setJobFinished] = useState(false);
     const updateFiles = (incommingFiles: ExtFile[]) => {
@@ -18,6 +21,8 @@ export default function FileUpload() {
     };
     const onDelete = (id: FileMosaicProps["id"]) => {
         setExtFiles(extFiles.filter((x) => x.id !== id));
+        setJobFinished(false);
+        onUploadMessage(null);
     };
     const handleStart = (filesToUpload: ExtFile[]) => {
         setJobFinished(false);
@@ -25,8 +30,17 @@ export default function FileUpload() {
     };
     const handleFinish = (uploadedFiles: ExtFile[]) => {
         setJobFinished(true);
+        if (uploadedFiles.length === 0 || !uploadedFiles[0].serverResponse || !uploadedFiles[0].serverResponse.payload.output_file) {
+            if (uploadedFiles[0].errors && uploadedFiles[0].errors.length > 0) {
+                onUploadMessage(uploadedFiles[0].errors[0]);
+                return;
+            }
+            onUploadMessage(uploadedFiles[0].serverResponse?.payload.error || "Upload failed");
+            return;
+        }
+        const apiResult = uploadedFiles[0].serverResponse.payload.output_file;
+        onUploadMessage(`Output File: ${apiResult}`);
         console.log("advanced demo finish upload", uploadedFiles);
-
     };
     const handleAbort = (id: FileMosaicProps["id"]) => {
         setExtFiles(
@@ -36,6 +50,7 @@ export default function FileUpload() {
                 } else return { ...ef };
             })
         );
+        setJobFinished(false);
     };
     const handleCancel = (id: FileMosaicProps["id"]) => {
         setExtFiles(
@@ -45,6 +60,7 @@ export default function FileUpload() {
                 } else return { ...ef };
             })
         );
+        setJobFinished(false);
     };
 
     const uploadConfig: UploadConfig = {
