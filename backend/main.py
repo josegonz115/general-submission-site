@@ -27,10 +27,15 @@ async def get_api_key(api_key_header: str = Security(API_KEY_HEADER)):
             status_code=HTTP_403_FORBIDDEN, detail="Could not validate API key"
         )
 
-URL = 'http://localhost:5173' if os.getenv("NODE_ENV") == "development" else 'https://general-submission-site.onrender.com'
+allowed_origins = [
+    'http://localhost:5173',
+] if os.getenv("NODE_ENV") == "development" else [
+    'https://general-submission-site.onrender.com',
+    'https://web-drive-submission-api.online'
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[URL],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -174,8 +179,6 @@ def get_file_content(dir_type: str = Path(..., pattern="^(outputs|uploads)$"), f
         directory = UPLOAD_DIR
     else:
         raise HTTPException(status_code=400, detail="Invalid directory type")
-    print('directory:',directory)
-    print('filename:',filename)
     file_path = os.path.join(directory, filename)
     # Ensure the file exists and is a text file
     if not os.path.isfile(file_path):
