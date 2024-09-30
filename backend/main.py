@@ -32,7 +32,8 @@ app.add_middleware(
     allow_origins=[
         #'http://localhost:5173',
         'https://general-submission-site.onrender.com',
-        'https://web-drive-submission-api.online'
+        'https://web-drive-submission-api.online',
+        'https://www.web-drive-submission-api.online',  
     ],
     allow_credentials=True,
     allow_methods=["*"],
