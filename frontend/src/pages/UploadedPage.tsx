@@ -38,7 +38,6 @@ const UploadedPage = () => {
         return;
       }
       const fileOutputs = outputFiles.outputs;
-      console.log("fileOutputs", fileOutputs);
       const extFiles: ExtFile[] = fileOutputs.map((file) => {
         return {
           id: file.filename,
@@ -58,7 +57,6 @@ const UploadedPage = () => {
         return;
       }
       const fileUploads = uploadFiles.uploads;
-      console.log("fileUploads", fileUploads);
       const extFiles: ExtFile[] = fileUploads.map((file) => {
         return {
           id: file.filename,

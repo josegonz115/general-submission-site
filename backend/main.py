@@ -1,57 +1,37 @@
 from fastapi import FastAPI, File, HTTPException, UploadFile, Path
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTextResponse
-from fastapi.staticfiles import StaticFiles
-from starlette.templating import Jinja2Templates
+from fastapi.responses import FileResponse, JSONResponse
 from starlette.requests import Request
 import subprocess
 import os
-from config import ROOT_DIR
 import logging
 from datetime import datetime
 import mimetypes
 from fastapi.middleware.cors import CORSMiddleware
 
-# run the server with: uvicorn main:app --reload
+# run the server with: NODE_ENV=development uvicorn main:app --reload
 # proeductiion: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
 
 app = FastAPI()
 
-assets_directory = os.path.join(ROOT_DIR, "frontend/dist/assets")
-public_directory = os.path.join(ROOT_DIR, "frontend/public")
-app.mount("/assets", StaticFiles(directory=assets_directory), name="assets")
-app.mount("/public", StaticFiles(directory=public_directory), name="public")
 
-templates = Jinja2Templates(directory=os.path.join(ROOT_DIR, "frontend/dist"))
+URL = 'http://localhost:5173' if os.getenv("NODE_ENV") == "development" else 'https://general-submission-site.onrender.com'
+print('URL:',URL)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[URL],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-if os.getenv("NODE_ENV") == "development":
-    # for DEVELOPMENT ONLY
-    origins = [
-        'http://localhost:5173',
-    ]
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-    # END DEVELOPMENT
-
-
-import os
-
-UPLOAD_DIR = os.path.join(ROOT_DIR, "backend/uploads")
-OUTPUT_DIR = os.path.join(ROOT_DIR, "backend/outputs")
+UPLOAD_DIR = "uploads"
+OUTPUT_DIR = "outputs"
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-@app.get("/", response_class=HTMLResponse)
-async def root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
 
 @app.post("/api/upload", response_class=JSONResponse)
 async def upload_file(file: UploadFile = File(...)):
@@ -76,9 +56,9 @@ async def upload_file(file: UploadFile = File(...)):
             ['bash', 'backend.sh', file_path],
             capture_output=True,
             text=True,
-            check=True,
-            cwd=os.path.join(ROOT_DIR, "backend")
-        )
+            check=True
+            )
+        
         output = result.stdout
         logger.info(f"Script output: {output}")
     except subprocess.CalledProcessError as e:
@@ -182,20 +162,19 @@ def get_file_content(dir_type: str = Path(..., pattern="^(outputs|uploads)$"), f
         directory = UPLOAD_DIR
     else:
         raise HTTPException(status_code=400, detail="Invalid directory type")
+    print('directory:',directory)
+    print('filename:',filename)
     file_path = os.path.join(directory, filename)
     # Ensure the file exists and is a text file
     if not os.path.isfile(file_path):
         raise HTTPException(status_code=404, detail="File not found")
-    if not filename.endswith(('.txt', '.csv', '.log', '.json', '.html')):  # Add any other text-based extensions
-        raise HTTPException(status_code=400, detail="File type not supported for preview")
+    # Check if the file is a photo or video file type
+    if dir_type == "uploads":
+        mime_type, _ = mimetypes.guess_type(file_path)
+        if mime_type and mime_type.startswith(('image/', 'video/')):
+            raise HTTPException(status_code=400, detail="Photo and video file types are not supported for preview")
     # Read and return the file content
     with open(file_path, 'r') as file:
         content = file.read()
     # return content
     return JSONResponse(content={"content": content})
-
-
-
-@app.get("/{full_path:path}", response_class=HTMLResponse)
-async def catch_all(request: Request, full_path: str):
-    return templates.TemplateResponse("index.html", {"request": request})

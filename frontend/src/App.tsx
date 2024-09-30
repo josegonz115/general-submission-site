@@ -7,9 +7,11 @@ import {
   createRouter,
   createRoute,
   createRootRoute,
+  Link,
 } from '@tanstack/react-router';
 import Home from './pages/Home';
 import UploadedPage from './pages/UploadedPage';
+import { Button } from './components/ui/button';
 
 const rootRoute = createRootRoute({
   component: () => (
@@ -21,6 +23,12 @@ const rootRoute = createRootRoute({
       </div>
       <Footer/>
     </main>
+  ), 
+  notFoundComponent: () => ( 
+    <div className='flex-grow'>
+      <h1 className='mt-10'>This setting page doesn't exist!</h1> 
+      <Button className='mt-10 text-white'><Link to="/" className='text-white'>Click here to go to home page.</Link></Button>
+    </div>
   ),
 })
 

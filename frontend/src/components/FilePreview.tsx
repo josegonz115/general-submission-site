@@ -1,27 +1,28 @@
 // FilePreview.js
 import { useState, useEffect, useRef } from 'react';
-import { fetchFileContent } from '../api/api';
+import { fetchFileContent, FileContentError, FileContentResponse } from '../api/api';
 
 function FilePreview({ filename, onClose }: { filename: string; onClose: () => void }) {
-    const [content, setContent] = useState('');
+    const [content, setContent] = useState<string | null>('');
     const [error, setError] = useState<string | null>(null);
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
 
     useEffect(() => {
-        fetchFileContent(filename)
-            .then((data) => {
-                if (data !== null) {
-                    setContent(data.content);
-                } else {
-                    setError('Failed to fetch file content.');
-                }
-            })
-            .catch((err) => {
-                console.error(err);
-                setError('Error fetching file content.');
-            });
+        const fetchContent = async () => {
+            try {
+                const data: FileContentResponse = await fetchFileContent(filename);
+                setError(null);
+                setContent(data.content);
+            } catch (err) {
+                const error = err as FileContentError;
+                console.error(error);
+                setError(error.detail);
+                setContent(null);
+            }
+        };
+        fetchContent();
     }, [filename]);
 
 
@@ -37,13 +38,6 @@ function FilePreview({ filename, onClose }: { filename: string; onClose: () => v
     }
 
     return (
-        // <div>
-        //     <h3>Preview of {filename}</h3>
-        //     <button onClick={onClose}>Close Preview</button>
-        //     <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word', background: '#f5f5f5', padding: '10px' }}>
-        //         {content}
-        //     </pre>
-        // </div>
         <div className="relative p-4 border border-gray-300 rounded-md">
             <h3 className="text-lg font-semibold mb-2">Preview of {filename}</h3>
             <button
@@ -54,9 +48,9 @@ function FilePreview({ filename, onClose }: { filename: string; onClose: () => v
             </button>
             <textarea
                 ref={textareaRef}
-                value={content}
+                value={content || ''}
                 readOnly
-                className="w-full min-h-[200px] resize-y border border-gray-300 rounded-md p-2 font-mono text-sm bg-gray-50 text-gray-800 overflow-auto focus:outline-none"
+                className="w-full min-h-[200px] max-h-[700px] resize-y border border-gray-300 rounded-md p-2 font-mono text-sm bg-gray-50 text-gray-800 overflow-auto focus:outline-none"
             />
         </div>
         

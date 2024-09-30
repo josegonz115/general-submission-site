@@ -16,7 +16,7 @@ export default function FileUpload({ onUploadMessage }: FileUploadProps) {
     const [extFiles, setExtFiles] = useState<ExtFile[]>([]);
     const [jobFinished, setJobFinished] = useState(false);
     const updateFiles = (incommingFiles: ExtFile[]) => {
-        console.log("incomming files", incommingFiles);
+        if(import.meta.env.DEV) console.log("incomming files", incommingFiles);
         setExtFiles(incommingFiles);
     };
     const onDelete = (id: FileMosaicProps["id"]) => {
@@ -26,7 +26,7 @@ export default function FileUpload({ onUploadMessage }: FileUploadProps) {
     };
     const handleStart = (filesToUpload: ExtFile[]) => {
         setJobFinished(false);
-        console.log("advanced demo start upload", filesToUpload);
+        if(import.meta.env.DEV) console.log("advanced demo start upload", filesToUpload);
     };
     const handleFinish = (uploadedFiles: ExtFile[]) => {
         setJobFinished(true);
@@ -40,7 +40,7 @@ export default function FileUpload({ onUploadMessage }: FileUploadProps) {
         }
         const apiResult = uploadedFiles[0].serverResponse.payload.output_file;
         onUploadMessage(`Output File: ${apiResult}`);
-        console.log("advanced demo finish upload", uploadedFiles);
+        if(import.meta.env.DEV) console.log("advanced demo finish upload", uploadedFiles);
     };
     const handleAbort = (id: FileMosaicProps["id"]) => {
         setExtFiles(

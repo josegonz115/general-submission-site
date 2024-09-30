@@ -1,4 +1,3 @@
-//example output
 // export const BASE_URL = import.meta.env.PROD ? window.location.origin : 'http://127.0.0.1:8000';
 export const BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -26,13 +25,11 @@ export const uploadFile = async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
     try {
-        console.log(URL + "/api/upload");//TESTING
         const data = await myFetch("/api/upload", {
             method: "POST",
             body: formData,
         });
         const parsedData = parseOutput(data.output);
-        console.log('parsedData', parsedData);//TESTING
         return parsedData;
     } catch (error) {
         console.error("Error uploading file:", error);
@@ -96,7 +93,6 @@ export const getUploadFiles = async () => {
     }
 };
 
-
 export const deleteFile = async (file_url: string) => {
     try {
         await myFetch(file_url, { method: "DELETE" });
@@ -106,19 +102,29 @@ export const deleteFile = async (file_url: string) => {
     }
 };
 
-type FileContentResponse = {
+export type FileContentResponse = {
     content: string;
 };
-export const fetchFileContent = async (filename: string) => {
+// types.ts
+export type FileContentError = {
+    status: number,
+    detail: string
+};
+export const fetchFileContent = async (filename: string): Promise<FileContentResponse> => {
     try {
-        const data = await myFetch(filename + '/content');
-        return data as FileContentResponse;
+        const response = await fetch(`${BASE_URL}${filename}/content`);
+        if (!response.ok) {
+            const error: FileContentError = await response.json();
+            if (import.meta.env.DEV) console.error("Error fetching file content:", error);
+            throw error;
+        }
+        const data: FileContentResponse = await response.json(); 
+        return data;
     } catch (error) {
-        console.error("Error fetching file content:", error);
-        return null;
+        if (import.meta.env.DEV) console.error("Error fetching file content:", error);
+        throw error;
     }
 };
-
 // export const acceptedFileExtensions = [
 //     'txt',  // Text files
 //     'py',   // Python files

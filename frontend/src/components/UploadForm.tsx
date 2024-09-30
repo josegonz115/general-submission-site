@@ -38,8 +38,7 @@ const UploadForm = () => {
                 method: "POST",
                 body: formData,
             });
-            const data = await response.json();
-            console.log(data); //TESTING
+            await response.json(); // TESTING
         } catch (error) {
             console.error("Error uploading file:", error);
         }
