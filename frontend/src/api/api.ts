@@ -1,8 +1,6 @@
 //example output
-// {
-//     "output": "Checksum on checksum.c:\n10474\nmd5sum on input file:\nEdges:\n    8323 uploads/37bf0a1c-cd16-45f5-ae30-9231558b85a5_syeast0.el\nNodes:\n    1004\n"
-// }
-export const BASE_URL = import.meta.env.PROD ? window.location.origin : 'http://127.0.0.1:8000';
+// export const BASE_URL = import.meta.env.PROD ? window.location.origin : 'http://127.0.0.1:8000';
+export const BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 export const MAX_FILE_SIZE = 1048576; // 1 MB in bytes
 const defaultHeaders = {
