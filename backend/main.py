@@ -27,15 +27,13 @@ async def get_api_key(api_key_header: str = Security(API_KEY_HEADER)):
             status_code=HTTP_403_FORBIDDEN, detail="Could not validate API key"
         )
 
-allowed_origins = [
-    'http://localhost:5173',
-] if os.getenv("NODE_ENV") == "development" else [
-    'https://general-submission-site.onrender.com',
-    'https://web-drive-submission-api.online'
-]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=[
+        #'http://localhost:5173',
+        'https://general-submission-site.onrender.com',
+        'https://web-drive-submission-api.online'
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
