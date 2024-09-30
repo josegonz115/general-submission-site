@@ -1,9 +1,11 @@
 // export const BASE_URL = import.meta.env.PROD ? window.location.origin : 'http://127.0.0.1:8000';
 export const BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
-
+const API_KEY = import.meta.env.VITE_API_KEY || ''; 
 export const MAX_FILE_SIZE = 1048576; // 1 MB in bytes
-const defaultHeaders = {
+export const defaultHeaders = {
     "Content-Type": "application/json",
+    "X-API-Key": API_KEY,
+
 };
 const myFetch = async (endpoint: string, options: RequestInit = {}) => {
     const url = `${BASE_URL}${endpoint}`;
@@ -112,7 +114,7 @@ export type FileContentError = {
 };
 export const fetchFileContent = async (filename: string): Promise<FileContentResponse> => {
     try {
-        const response = await fetch(`${BASE_URL}${filename}/content`);
+        const response = await fetch(`${BASE_URL}${filename}/content`, { headers: { ...defaultHeaders } });
         if (!response.ok) {
             const error: FileContentError = await response.json();
             if (import.meta.env.DEV) console.error("Error fetching file content:", error);

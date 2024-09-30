@@ -6,7 +6,7 @@ import {
     UploadConfig,
 } from "@files-ui/react";
 import { useState } from "react";
-import { BASE_URL, MAX_FILE_SIZE } from "@/api/api";
+import { BASE_URL, defaultHeaders, MAX_FILE_SIZE } from "@/api/api";
 import { Button } from "./ui/button";
 
 type FileUploadProps = {
@@ -62,10 +62,13 @@ export default function FileUpload({ onUploadMessage }: FileUploadProps) {
         );
         setJobFinished(false);
     };
-
+    const { 'X-API-Key': apiKey } = defaultHeaders;
     const uploadConfig: UploadConfig = {
         // autoUpload: true
         url: BASE_URL + "/api/upload",
+        headers: {
+            'X-API-Key': apiKey,
+        },
         cleanOnUpload: true,
     };
 

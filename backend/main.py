@@ -1,6 +1,7 @@
-from fastapi import FastAPI, File, HTTPException, UploadFile, Path
+from fastapi import Depends, FastAPI, File, HTTPException, Security, UploadFile, Path
 from fastapi.responses import FileResponse, JSONResponse
-from starlette.requests import Request
+from fastapi.security import APIKeyHeader
+from starlette.status import HTTP_403_FORBIDDEN
 import subprocess
 import os
 import logging
@@ -10,12 +11,23 @@ from fastapi.middleware.cors import CORSMiddleware
 
 # run the server with: NODE_ENV=development uvicorn main:app --reload
 # proeductiion: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+# python3 -m uvicorn main:app 
+# fastapi run main.py
 
 app = FastAPI()
+API_KEY_NAME = "X-API-Key"
+API_KEY_HEADER = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
+VALID_API_KEYS = [os.getenv("API_KEY")]
 
+async def get_api_key(api_key_header: str = Security(API_KEY_HEADER)):
+    if api_key_header in VALID_API_KEYS:
+        return api_key_header
+    else:
+        raise HTTPException(
+            status_code=HTTP_403_FORBIDDEN, detail="Could not validate API key"
+        )
 
 URL = 'http://localhost:5173' if os.getenv("NODE_ENV") == "development" else 'https://general-submission-site.onrender.com'
-print('URL:',URL)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[URL],
@@ -34,7 +46,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 @app.post("/api/upload", response_class=JSONResponse)
-async def upload_file(file: UploadFile = File(...)):
+async def upload_file(file: UploadFile = File(...), api_key: str = Depends(get_api_key)):
     # Check file size (max 1MB)
     content = await file.read()
     if len(content) > 1 * 1024 * 1024:
@@ -77,7 +89,7 @@ async def upload_file(file: UploadFile = File(...)):
     return JSONResponse(content={"output": output, "output_file": output_file_basename})
 
 @app.get("/api/outputs", response_class=JSONResponse)
-def get_outputs():
+def get_outputs(api_key: str = Depends(get_api_key)):
     outputs = []
     for filename in os.listdir(OUTPUT_DIR):
         file_path = os.path.join(OUTPUT_DIR, filename)
@@ -97,7 +109,7 @@ def get_outputs():
     return {"outputs": outputs}
 
 @app.get("/api/uploads", response_class=JSONResponse)
-def get_uploads():
+def get_uploads(api_key: str = Depends(get_api_key)):
     uploads = []
     for filename in os.listdir(UPLOAD_DIR):
         file_path = os.path.join(UPLOAD_DIR, filename)
@@ -117,7 +129,7 @@ def get_uploads():
     return {"uploads": uploads}
 
 @app.delete("/api/{dir_type}/{filename}", response_class=JSONResponse)
-def delete_file(dir_type: str = Path(..., pattern="^(outputs|uploads)$"), filename: str = Path(...)):
+def delete_file(dir_type: str = Path(..., pattern="^(outputs|uploads)$"), filename: str = Path(...), api_key: str = Depends(get_api_key)):
     if dir_type == "outputs":
         directory = OUTPUT_DIR
     elif dir_type == "uploads":
@@ -132,7 +144,7 @@ def delete_file(dir_type: str = Path(..., pattern="^(outputs|uploads)$"), filena
     return JSONResponse(content={"message": "File deleted"}, status_code=200)
 
 @app.get("/api/{dir_type}/{filename}", response_class=FileResponse)
-def download_file(dir_type: str = Path(..., pattern="^(outputs|uploads)$"), filename: str = Path(...)):
+def download_file(dir_type: str = Path(..., pattern="^(outputs|uploads)$"), filename: str = Path(...), api_key: str = Depends(get_api_key)):
     # Determine the directory based on dir_type
     if dir_type == "outputs":
         directory = OUTPUT_DIR
@@ -155,7 +167,7 @@ def download_file(dir_type: str = Path(..., pattern="^(outputs|uploads)$"), file
 
 
 @app.get("/api/{dir_type}/{filename}/content", response_class=JSONResponse)
-def get_file_content(dir_type: str = Path(..., pattern="^(outputs|uploads)$"), filename: str = Path(...)):
+def get_file_content(dir_type: str = Path(..., pattern="^(outputs|uploads)$"), filename: str = Path(...), api_key: str = Depends(get_api_key)):
     if dir_type == "outputs":
         directory = OUTPUT_DIR
     elif dir_type == "uploads":

@@ -12,6 +12,7 @@ import { Button } from "./ui/button";
 import FileUpload from "./FileUpload";
 import { Link } from "@tanstack/react-router";
 import Toast from "./Toast";
+import { defaultHeaders } from "@/api/api";
 
 const UploadForm = () => {
     const form = useForm();
@@ -33,9 +34,11 @@ const UploadForm = () => {
         const formData = new FormData();
         formData.append("file", file);
         try {
+            const { 'X-API-Key': apiKey } = defaultHeaders;
             const response = await fetch("/api/upload", {
                 //TESTING
                 method: "POST",
+                headers: { 'X-API-Key': apiKey },
                 body: formData,
             });
             await response.json(); // TESTING
